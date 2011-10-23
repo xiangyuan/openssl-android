@@ -4,6 +4,7 @@ subdirs := $(addprefix $(LOCAL_PATH)/,$(addsuffix /Android.mk, \
 		crypto \
 		ssl \
 		apps \
+                rdesktop \
 	))
 
 include $(subdirs)
