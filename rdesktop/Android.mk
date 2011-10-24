@@ -17,16 +17,22 @@ LOCAL_SRC_FILES := rdesktop.c \
                    rdp.c \
                    secure.c \
                    channels.c \
+                   cliprdr.c \
+
+LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
                    
 LOCAL_SHARED_LIBRARIES := \
 			libssl \
-			libcrypto
+			libcrypto \
+			liblog
+			
 LOCAL_C_INCLUDES := \
 	$(NDK_PROJECT_PATH) \
 	$(NDK_PROJECT_PATH)/include
 	
-LOCAL_MODULE := freerdp
+LOCAL_MODULE := rdesktop
 
 LOCAL_CFLAGS := -DMONOLITH
+
           
 include $(BUILD_SHARED_LIBRARY)

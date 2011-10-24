@@ -13,7 +13,15 @@ extern "C" {
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_getenv
-  (JNIEnv *, jobject);
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_kidfolk_androidRDP_RdesktopNative
+ * Method:    rdp_connect
+ * Signature: (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)I
+ */
+JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect
+  (JNIEnv *, jclass, jstring, jint, jstring, jstring, jstring, jstring, jboolean);
 
 #ifdef __cplusplus
 }

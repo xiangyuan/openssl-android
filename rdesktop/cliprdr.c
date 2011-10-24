@@ -134,7 +134,7 @@ cliprdr_process(STREAM s)
 								    last_formats_length);
 				break;
 			case CLIPRDR_DATA_RESPONSE:
-				ui_clip_request_failed();
+				//ui_clip_request_failed();
 				break;
 			default:
 				DEBUG_CLIPBOARD(("CLIPRDR error (type=%d)\n", type));
@@ -146,20 +146,20 @@ cliprdr_process(STREAM s)
 	switch (type)
 	{
 		case CLIPRDR_CONNECT:
-			ui_clip_sync();
+			//ui_clip_sync();
 			break;
 		case CLIPRDR_FORMAT_ANNOUNCE:
-			ui_clip_format_announce(data, length);
+			//ui_clip_format_announce(data, length);
 			cliprdr_send_packet(CLIPRDR_FORMAT_ACK, CLIPRDR_RESPONSE, NULL, 0);
 			return;
 		case CLIPRDR_FORMAT_ACK:
 			break;
 		case CLIPRDR_DATA_REQUEST:
 			in_uint32_le(s, format);
-			ui_clip_request_data(format);
+			//ui_clip_request_data(format);
 			break;
 		case CLIPRDR_DATA_RESPONSE:
-			ui_clip_handle_data(data, length);
+			//ui_clip_handle_data(data, length);
 			break;
 		case 7:	/* TODO: W2K3 SP1 sends this on connect with a value of 1 */
 			break;
@@ -171,7 +171,7 @@ cliprdr_process(STREAM s)
 void
 cliprdr_set_mode(const char *optarg)
 {
-	ui_clip_set_mode(optarg);
+	//ui_clip_set_mode(optarg);
 }
 
 RD_BOOL

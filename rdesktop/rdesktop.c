@@ -54,10 +54,21 @@ int g_keyboard_functionkeys = 0xc; /* Defaults to US keyboard layout */
 
 RD_BOOL g_console_session = False;
 
-JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_getenv(JNIEnv *env, jobject thiz){
+JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_getenv(JNIEnv *env, jclass thiz){
     //char buf[1024] ;
     //return (*env)->NewStringUTF(env, getcwd(buf,1024));
     return (*env)->NewStringUTF(env, getenv("EXTERNAL_STORAGE"));
+}
+
+JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect(JNIEnv *env, jclass thiz, jstring server, jint flags, jstring domain, jstring password, jstring shell, jstring directory, jboolean g_redirect)
+{
+    __android_log_write(ANDROID_LOG_INFO,"JNImsg","");
+    int result = 1;
+    
+    result = rdp_connect(server, flags, domain, password, shell, directory,g_redirect);
+    //DEBUG_RDESKTOP(android_LogPriority.ANDROID_LOG_DEBUG,"Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect","");
+    return result;
+
 }
 
 /* report an unimplemented protocol feature */
