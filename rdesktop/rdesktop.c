@@ -9,11 +9,13 @@
 #include <ctype.h>		/* toupper */
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 #include "rdesktop.h"
 #include "ssl.h"
 #include "org_kidfolk_androidRDP_RdesktopNative.h"
 
 char *g_username;
+char password[64];
 char g_hostname[16];
 
 RD_BOOL g_bitmap_cache = True;
@@ -60,12 +62,36 @@ JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_getenv(JNIE
     return (*env)->NewStringUTF(env, getenv("EXTERNAL_STORAGE"));
 }
 
+/*
+ * Class:     org_kidfolk_androidRDP_RdesktopNative
+ * Method:    setUsername
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setUsername(JNIEnv *env, jclass thiz, jstring username)
+{
+//    g_username = (char *) xmalloc(strlen(username) + 1);
+//    STRNCPY(g_username, username, sizeof(g_username));
+    g_username = strdup(username);
+}
+
+/*
+ * Class:     org_kidfolk_androidRDP_RdesktopNative
+ * Method:    setPassword
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setPassword(JNIEnv *env, jclass thiz, jstring jpassword)
+{
+    
+    STRNCPY(password, jpassword, sizeof(password));
+}
+
 JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect(JNIEnv *env, jclass thiz, jstring server, jint flags, jstring domain, jstring password, jstring shell, jstring directory, jboolean g_redirect)
 {
     __android_log_write(ANDROID_LOG_INFO,"JNImsg","");
     int result = 1;
-    
-    result = rdp_connect(server, flags, domain, password, shell, directory,g_redirect);
+    g_username = "kidfolk";
+
+    result = rdp_connect(server,flags,domain,password,shell,directory,g_redirect);
     //DEBUG_RDESKTOP(android_LogPriority.ANDROID_LOG_DEBUG,"Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect","");
     return result;
 

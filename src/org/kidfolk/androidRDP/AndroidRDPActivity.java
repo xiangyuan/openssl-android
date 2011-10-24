@@ -11,7 +11,9 @@ public class AndroidRDPActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         TextView text = (TextView) findViewById(R.id.text);
-        int result = RdesktopNative.rdp_connect("192.168.8.47", 0, "kidfolk", "xwjshow", "", "", false);
+        RdesktopNative.setUsername("kidfolk");
+        RdesktopNative.setPassword("xwjshow");
+        int result = RdesktopNative.rdp_connect("192.168.8.47", 51, "", "xwjshow", "", "", false);
         //String str = mNative.getenv();
         text.setText(result+"");
     }

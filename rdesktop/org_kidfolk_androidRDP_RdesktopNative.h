@@ -17,6 +17,22 @@ JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_getenv
 
 /*
  * Class:     org_kidfolk_androidRDP_RdesktopNative
+ * Method:    setUsername
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setUsername
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     org_kidfolk_androidRDP_RdesktopNative
+ * Method:    setPassword
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setPassword
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     org_kidfolk_androidRDP_RdesktopNative
  * Method:    rdp_connect
  * Signature: (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)I
  */
