@@ -39,6 +39,14 @@ JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setPassword
 JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect
   (JNIEnv *, jclass, jstring, jint, jstring, jstring, jstring, jstring, jboolean);
 
+/*
+ * Class:     org_kidfolk_androidRDP_RdesktopNative
+ * Method:    rdp_main_loop
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1main_1loop
+  (JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif

@@ -27,9 +27,9 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#if defined(__linux__)
-#include <linux/lp.h>
-#endif
+//#if defined(__linux__)
+//#include <linux/lp.h>
+//#endif
 
 extern RDPDR_DEVICE g_rdpdr_device[];
 

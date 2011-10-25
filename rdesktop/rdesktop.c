@@ -12,10 +12,12 @@
 #include <string.h>
 #include "rdesktop.h"
 #include "ssl.h"
-#include "org_kidfolk_androidRDP_RdesktopNative.h"
+#include "org_kidfolk_androidRDP_AndroidRDPActivity.h"
+#include <android/log.h>
 
 char *g_username;
-char password[64];
+//char password[64];
+char *password;
 char g_hostname[16];
 
 RD_BOOL g_bitmap_cache = True;
@@ -56,9 +58,12 @@ int g_keyboard_functionkeys = 0xc; /* Defaults to US keyboard layout */
 
 RD_BOOL g_console_session = False;
 
-JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_getenv(JNIEnv *env, jclass thiz){
-    //char buf[1024] ;
-    //return (*env)->NewStringUTF(env, getcwd(buf,1024));
+RD_BOOL deactivated;
+uint32 ext_disc_reason = 0;
+
+JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_getenv(JNIEnv *env, jclass thiz)
+{
+    __android_log_print(ANDROID_LOG_INFO, "JNIMsg", "getenv");
     return (*env)->NewStringUTF(env, getenv("EXTERNAL_STORAGE"));
 }
 
@@ -67,11 +72,14 @@ JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_getenv(JNIE
  * Method:    setUsername
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setUsername(JNIEnv *env, jclass thiz, jstring username)
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_setUsername(JNIEnv *env, jclass thiz, jstring username)
 {
 //    g_username = (char *) xmalloc(strlen(username) + 1);
 //    STRNCPY(g_username, username, sizeof(g_username));
-    g_username = strdup(username);
+    const char *nativeString = (*env)->GetStringUTFChars(env,username,NULL);
+    g_username = (char *) xmalloc(strlen(nativeString) + 1);
+    STRNCPY(g_username,nativeString,strlen(nativeString)+1);
+    //__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "setUsername:%s",g_username);
 }
 
 /*
@@ -79,22 +87,37 @@ JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setUsername(JN
  * Method:    setPassword
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_setPassword(JNIEnv *env, jclass thiz, jstring jpassword)
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_setPassword(JNIEnv *env, jclass thiz, jstring jpassword)
 {
-    
-    STRNCPY(password, jpassword, sizeof(password));
+    const char *str = (*env)->GetStringUTFChars(env,jpassword,NULL);
+    password = (char *) xmalloc(strlen(str) + 1);
+    STRNCPY(password,str,strlen(str)+1);
+    //__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "setPassword:%s",str);
 }
 
-JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect(JNIEnv *env, jclass thiz, jstring server, jint flags, jstring domain, jstring password, jstring shell, jstring directory, jboolean g_redirect)
+JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_rdp_1connect(JNIEnv *env, jclass thiz, jstring jserver, jint flags, jstring domain, jstring jpassword, jstring shell, jstring directory, jboolean g_redirect)
 {
-    __android_log_write(ANDROID_LOG_INFO,"JNImsg","");
+    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect");
     int result = 1;
-    g_username = "kidfolk";
-
+    const char *nativeServer = (*env)->GetStringUTFChars(env,jserver,NULL);
+    char *server = (char *) xmalloc(strlen(nativeServer)+1);
+    STRNCPY(server,nativeServer,strlen(nativeServer)+1);
+    //__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect server:%s",server);
+    //__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect username:%s",g_username);
+    //__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect password:%s",password);
     result = rdp_connect(server,flags,domain,password,shell,directory,g_redirect);
-    //DEBUG_RDESKTOP(android_LogPriority.ANDROID_LOG_DEBUG,"Java_org_kidfolk_androidRDP_RdesktopNative_rdp_1connect","");
     return result;
 
+}
+
+/*
+ * Class:     org_kidfolk_androidRDP_RdesktopNative
+ * Method:    rdp_main_loop
+ * Signature: (II)V
+ */
+JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_rdp_1main_1loop(JNIEnv *env, jclass thiz)
+{
+    rdp_main_loop(&deactivated, &ext_disc_reason);
 }
 
 /* report an unimplemented protocol feature */
@@ -359,4 +382,105 @@ void generate_random(uint8 * random) {
 	ssl_md5_final(&md5, random);
 	ssl_md5_update(&md5, random + 16, 16);
 	ssl_md5_final(&md5, random + 16);
+}
+
+/*
+ input: src is the string we look in for needle.
+ Needle may be escaped by a backslash, in
+ that case we ignore that particular needle.
+ return value: returns next src pointer, for
+ succesive executions, like in a while loop
+ if retval is 0, then there are no more args.
+ pitfalls:
+ src is modified. 0x00 chars are inserted to
+ terminate strings.
+ return val, points on the next val chr after ins
+ 0x00
+ 
+ example usage:
+ while( (pos = next_arg( optarg, ',')) ){
+ printf("%s\n",optarg);
+ optarg=pos;
+ }
+ 
+ */
+char *
+next_arg(char *src, char needle) {
+	char *nextval;
+	char *p;
+	char *mvp = 0;
+    
+	/* EOS */
+	if (*src == (char) 0x00)
+		return 0;
+    
+	p = src;
+	/*  skip escaped needles */
+	while ((nextval = strchr(p, needle))) {
+		mvp = nextval - 1;
+		/* found backslashed needle */
+		if (*mvp == '\\' && (mvp > src)) {
+			/* move string one to the left */
+			while (*(mvp + 1) != (char) 0x00) {
+				*mvp = *(mvp + 1);
+				mvp++;
+			}
+			*mvp = (char) 0x00;
+			p = nextval;
+		} else {
+			p = nextval + 1;
+			break;
+		}
+        
+	}
+    
+	/* more args available */
+	if (nextval) {
+		*nextval = (char) 0x00;
+		return ++nextval;
+	}
+    
+	/* no more args after this, jump to EOS */
+	nextval = src + strlen(src);
+	return nextval;
+}
+
+void toupper_str(char *p) {
+	while (*p) {
+		if ((*p >= 'a') && (*p <= 'z'))
+			*p = toupper((int) *p);
+		p++;
+	}
+}
+
+/* not all clibs got ltoa */
+#define LTOA_BUFSIZE (sizeof(long) * 8 + 1)
+
+char *
+l_to_a(long N, int base) {
+	static char ret[LTOA_BUFSIZE];
+    
+	char *head = ret, buf[LTOA_BUFSIZE], *tail = buf + sizeof(buf);
+    
+	register int divrem;
+    
+	if (base < 36 || 2 > base)
+		base = 10;
+    
+	if (N < 0) {
+		*head++ = '-';
+		N = -N;
+	}
+    
+	tail = buf + sizeof(buf);
+	*--tail = 0;
+    
+	do {
+		divrem = N % base;
+		*--tail = (divrem <= 9) ? divrem + '0' : divrem + 'a' - 10;
+		N /= base;
+	} while (N);
+    
+	strcpy(head, tail);
+	return ret;
 }

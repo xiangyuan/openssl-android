@@ -17,7 +17,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include <android/log.h>
 #include <time.h>
 #ifndef _WIN32
 #include <errno.h>
@@ -1182,9 +1182,9 @@ void process_bitmap_updates(STREAM s) {
 		cx = right - left + 1;
 		cy = bottom - top + 1;
 
-		DEBUG(("BITMAP_UPDATE(l=%d,t=%d,r=%d,b=%d,w=%d,h=%d,Bpp=%d,cmp=%d)\n",
-						left, top, right, bottom, width, height, Bpp, compress));
-
+		//DEBUG(("BITMAP_UPDATE(l=%d,t=%d,r=%d,b=%d,w=%d,h=%d,Bpp=%d,cmp=%d)\n",
+		//				left, top, right, bottom, width, height, Bpp, compress));
+        __android_log_print(ANDROID_LOG_INFO,"JNIMsg","BITMAP_UPDATE(l=%d,t=%d,r=%d,b=%d,w=%d,h=%d,Bpp=%d,cmp=%d)",left, top, right, bottom, width, height, Bpp, compress);
 		if (!compress) {
 			int y;
 			bmpdata = (uint8 *) xmalloc(width * height * Bpp);
@@ -1254,6 +1254,7 @@ static void process_update_pdu(STREAM s) {
 	in_uint16_le(s, update_type);
 
 	// TODO ui_begin_update();
+    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","process_update_pdu STREAM:%p",s);
 	switch (update_type) {
 	case RDP_UPDATE_ORDERS:
 		in_uint8s(s, 2);
@@ -1283,6 +1284,7 @@ static void process_update_pdu(STREAM s) {
 
 /* Process a Save Session Info PDU */
 void process_pdu_logon(STREAM s) {
+    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","process_pdu_logon");
 	uint32 infotype;
 	in_uint32_le(s, infotype);
 	if (infotype == INFOTYPE_LOGON_EXTENDED_INF) {
@@ -1329,6 +1331,7 @@ void process_disconnect_pdu(STREAM s, uint32 * ext_disc_reason) {
 
 /* Process data PDU */
 static RD_BOOL process_data_pdu(STREAM s, uint32 * ext_disc_reason) {
+    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","process_data_pdu");
 	uint8 data_pdu_type;
 	uint8 ctype;
 	uint16 clen;
@@ -1391,6 +1394,7 @@ static RD_BOOL process_data_pdu(STREAM s, uint32 * ext_disc_reason) {
 		break;
 
 	case RDP_DATA_PDU_LOGON:
+            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","Received Logon PDU")
 		DEBUG(("Received Logon PDU\n"));
 		/* User logged on */
 		process_pdu_logon(s);
@@ -1504,6 +1508,7 @@ static RD_BOOL process_redirect_pdu(STREAM s /*, uint32 * ext_disc_reason */) {
 //TODO need to be wrapped
 /* Process incoming packets */
 void rdp_main_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
+    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_main_loop");
 	while (rdp_loop(deactivated, ext_disc_reason)) {
 		if (g_pending_resize) {
 			return;
@@ -1513,6 +1518,7 @@ void rdp_main_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
 
 /* used in uiports and rdp_main_loop, processes the rdp packets waiting */
 RD_BOOL rdp_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
+    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop");
 	uint8 type;
 	RD_BOOL cont = True;
 	STREAM s;
@@ -1524,17 +1530,21 @@ RD_BOOL rdp_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
 			return False;
 		switch (type) {
 		case RDP_PDU_DEMAND_ACTIVE:
+            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_DEMAND_ACTIVE");    
 			process_demand_active(s);
 			*deactivated = False;
 			break;
 		case RDP_PDU_DEACTIVATE:
+            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_DEACTIVATE"); 
 			DEBUG(("RDP_PDU_DEACTIVATE\n"));
 			*deactivated = True;
 			break;
 		case RDP_PDU_REDIRECT:
+            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_REDIRECT");
 			return process_redirect_pdu(s);
 			break;
 		case RDP_PDU_DATA:
+            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_DATA");
 			process_data_pdu(s, ext_disc_reason);
 			break;
 		case 0:
@@ -1547,7 +1557,6 @@ RD_BOOL rdp_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
 	return True;
 }
 
-//TODO need to be wrapped
 /* Establish a connection up to the RDP layer */
 RD_BOOL rdp_connect(char *server, uint32 flags, char *domain, char *password,
 		char *command, char *directory, RD_BOOL reconnect) {

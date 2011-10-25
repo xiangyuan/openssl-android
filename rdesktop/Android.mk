@@ -18,13 +18,23 @@ LOCAL_SRC_FILES := rdesktop.c \
                    secure.c \
                    channels.c \
                    cliprdr.c \
+                   printercache.c \
+                   rdpdr.c \
+                   parallel.c \
+                   printer.c \
+                   disk.c \
+                   serial.c \
+                  
+                   
+                   
+                   
 
-LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
+#LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
+LOCAL_LDLIBS += -llog
                    
 LOCAL_SHARED_LIBRARIES := \
 			libssl \
 			libcrypto \
-			liblog
 			
 LOCAL_C_INCLUDES := \
 	$(NDK_PROJECT_PATH) \

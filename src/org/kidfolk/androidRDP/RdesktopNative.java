@@ -13,6 +13,8 @@ public class RdesktopNative {
 	public static native int rdp_connect(String server, int flags, String domain,
 			String password, String shell, String directory, boolean g_redirect);
 
+	public static native void rdp_main_loop();
+	
 	static {
 		System.loadLibrary("rdesktop");
 	}

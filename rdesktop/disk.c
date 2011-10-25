@@ -32,11 +32,11 @@
 #include <utime.h>
 #include <time.h>		/* ctime */
 
-#if (defined(HAVE_DIRFD) || (HAVE_DECL_DIRFD == 1))
+//#if (defined(HAVE_DIRFD) || (HAVE_DECL_DIRFD == 1))
 #define DIRFD(a) (dirfd(a))
-#else
-#define DIRFD(a) ((a)->DIR_FD_MEMBER_NAME)
-#endif
+//#else
+//#define DIRFD(a) ((a)->DIR_FD_MEMBER_NAME)
+//#endif
 
 /* TODO: Fix mntent-handling for solaris
  * #include <sys/mntent.h> */
