@@ -209,6 +209,13 @@
 #include "constants.h"
 #include "types.h"
 
+/**
+ * send data to the java tier
+ * @param x
+ * @param y
+ */
+void send_data_vm(int left,int top,int cx,int cy, int width,int height,uint8 * bmpdata);
+
 #ifndef MAKE_PROTO
 #include "proto.h"
 #endif

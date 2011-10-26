@@ -22,8 +22,10 @@
 #ifndef _WIN32
 #include <errno.h>
 #include <unistd.h>
+
 #endif
 #include "rdesktop.h"
+
 #include "ssl.h"
 
 #ifdef HAVE_ICONV
@@ -89,11 +91,10 @@ static STREAM rdp_recv(uint8 * type) {
 	uint16 length, pdu_type;
 	uint8 rdpver;
 
-	if ((rdp_s == NULL) || (g_next_packet >= rdp_s->end)
-			|| (g_next_packet == NULL)) {
+	if ((rdp_s == NULL) || (g_next_packet >= rdp_s->end) || (g_next_packet
+			== NULL)) {
 		rdp_s = sec_recv(&rdpver);
-		if (rdp_s == NULL
-			)
+		if (rdp_s == NULL)
 			return NULL;
 		if (rdpver == 0xff) {
 			g_next_packet = rdp_s->end;
@@ -117,7 +118,8 @@ static STREAM rdp_recv(uint8 * type) {
 		g_next_packet += 8;
 		*type = 0;
 		return rdp_s;
-	}in_uint16_le(rdp_s, pdu_type);
+	}
+	in_uint16_le(rdp_s, pdu_type);
 	in_uint8s(rdp_s, 2);
 	/* userid */
 	*type = pdu_type & 0xf;
@@ -310,8 +312,8 @@ static void rdp_send_logon_info(uint32 flags, char *domain, char *user,
 	int len_ip = 2 * strlen(ipaddr);
 	int len_dll = 2 * strlen("C:\\WINNT\\System32\\mstscax.dll");
 	int packetlen = 0;
-	uint32 sec_flags =
-			g_encryption ? (SEC_LOGON_INFO | SEC_ENCRYPT) : SEC_LOGON_INFO;
+	uint32 sec_flags = g_encryption ? (SEC_LOGON_INFO | SEC_ENCRYPT)
+			: SEC_LOGON_INFO;
 	STREAM s;
 	time_t t = time(NULL);
 	time_t tzone;
@@ -320,10 +322,8 @@ static void rdp_send_logon_info(uint32 flags, char *domain, char *user,
 	if (!g_use_rdp5 || 1 == g_server_rdp_version) {
 		DEBUG_RDP5(("Sending RDP4-style Logon packet\n"));
 
-		s = sec_init(
-				sec_flags,
-				18 + len_domain + len_user + len_password + len_program
-						+ len_directory + 10);
+		s = sec_init(sec_flags, 18 + len_domain + len_user + len_password
+				+ len_program + len_directory + 10);
 
 		out_uint32(s, 0);
 		out_uint32_le(s, flags);
@@ -373,22 +373,21 @@ static void rdp_send_logon_info(uint32 flags, char *domain, char *user,
 		out_uint32_le(s, flags);
 		out_uint16_le(s, len_domain);
 		out_uint16_le(s, len_user);
-		if (flags & RDP_LOGON_AUTO)
-		{
+		if (flags & RDP_LOGON_AUTO) {
 			out_uint16_le(s, len_password);
 
 		}
 		if (flags & RDP_LOGON_BLOB && !(flags & RDP_LOGON_AUTO)) {
 			out_uint16_le(s, 0);
-		}out_uint16_le(s, len_program);
+		}
+		out_uint16_le(s, len_program);
 		out_uint16_le(s, len_directory);
 		if (0 < len_domain)
 			rdp_out_unistr(s, domain, len_domain);
 		else
-		out_uint16_le(s, 0);
+			out_uint16_le(s, 0);
 		rdp_out_unistr(s, user, len_user);
-		if (flags & RDP_LOGON_AUTO)
-		{
+		if (flags & RDP_LOGON_AUTO) {
 			rdp_out_unistr(s, password, len_password);
 		}
 		if (flags & RDP_LOGON_BLOB && !(flags & RDP_LOGON_AUTO)) {
@@ -458,7 +457,8 @@ static void rdp_send_logon_info(uint32 flags, char *domain, char *user,
 			/* cbAutoReconnectLen */
 		}
 
-	}s_mark_end(s);
+	}
+	s_mark_end(s);
 	sec_send(s, sec_flags);
 }
 
@@ -761,7 +761,8 @@ static void rdp_out_bmpcache2_caps(STREAM s) {
 		out_uint32_le(s, BMPCACHE2_NUM_PSTCELLS | BMPCACHE2_FLAG_PERSIST);
 	} else {
 		out_uint32_le(s, BMPCACHE2_C2_CELLS);
-	}out_uint8s(s, 20);
+	}
+	out_uint8s(s, 20);
 	/* other bitmap caches not used */
 }
 
@@ -960,7 +961,8 @@ static void rdp_process_bitmap_caps(STREAM s) {
 	in_uint16_le(s, width);
 	in_uint16_le(s, height);
 
-	DEBUG(("setting desktop size and depth to: %dx%dx%d\n", width, height, depth));
+	DEBUG(
+			("setting desktop size and depth to: %dx%dx%d\n", width, height, depth));
 
 	/*
 	 * The server may limit depth and change the size of the desktop (for
@@ -1037,8 +1039,8 @@ static void process_demand_active(STREAM s) {
 	rdp_recv(&type); /* RDP_CTL_COOPERATE */
 	rdp_recv(&type); /* RDP_CTL_GRANT_CONTROL */
 	//TODO rdp_send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
-			//g_numlock_sync ? ui_get_numlock_state(read_keyboard_state()) : 0,
-			//0);
+	//g_numlock_sync ? ui_get_numlock_state(read_keyboard_state()) : 0,
+	//0);
 
 	if (g_use_rdp5) {
 		rdp_enum_bmpcache2();
@@ -1070,8 +1072,8 @@ static void process_colour_pointer_common(STREAM s, int bpp) {
 	in_uint8p(s, data, datalen);
 	in_uint8p(s, mask, masklen);
 	if ((width != 32) || (height != 32)) {
-		warning("process_colour_pointer_common: " "width %d height %d\n", width,
-				height);
+		warning("process_colour_pointer_common: " "width %d height %d\n",
+				width, height);
 	}
 	/* sometimes x or y is out of bounds */
 	x = MAX(x, 0);
@@ -1134,7 +1136,7 @@ static void process_pointer_pdu(STREAM s) {
 		in_uint16_le(s, y);
 		if (s_check(s))
 			// TODO ui_move_pointer(x, y);
-		break;
+			break;
 
 	case RDP_POINTER_COLOR:
 		process_colour_pointer_pdu(s);
@@ -1184,13 +1186,17 @@ void process_bitmap_updates(STREAM s) {
 
 		//DEBUG(("BITMAP_UPDATE(l=%d,t=%d,r=%d,b=%d,w=%d,h=%d,Bpp=%d,cmp=%d)\n",
 		//				left, top, right, bottom, width, height, Bpp, compress));
-        __android_log_print(ANDROID_LOG_INFO,"JNIMsg","BITMAP_UPDATE(l=%d,t=%d,r=%d,b=%d,w=%d,h=%d,Bpp=%d,cmp=%d)",left, top, right, bottom, width, height, Bpp, compress);
+		__android_log_print(
+				ANDROID_LOG_INFO,
+				"JNIMsg",
+				"process_bitmap_updates BITMAP_UPDATE(l=%d,t=%d,r=%d,b=%d,w=%d,h=%d,Bpp=%d,cmp=%d)",
+				left, top, right, bottom, width, height, Bpp, compress);
 		if (!compress) {
 			int y;
 			bmpdata = (uint8 *) xmalloc(width * height * Bpp);
 			for (y = 0; y < height; y++) {
-				in_uint8a(s, &bmpdata[(height - y - 1) * (width * Bpp)],
-						width * Bpp);
+				in_uint8a(s, &bmpdata[(height - y - 1) * (width * Bpp)], width
+						* Bpp);
 			}
 			// TODO ui_paint_bitmap(left, top, cx, cy, width, height, bmpdata);
 			xfree(bmpdata);
@@ -1205,14 +1211,18 @@ void process_bitmap_updates(STREAM s) {
 			in_uint16_le(s, size);
 			in_uint8s(s, 4);
 			/* line_size, final_size */
-		}in_uint8p(s, data, size);
+		}
+		in_uint8p(s, data, size);
 		bmpdata = (uint8 *) xmalloc(width * height * Bpp);
 		if (bitmap_decompress(bmpdata, width, height, data, size, Bpp)) {
-			// TODO ui_paint_bitmap(left, top, cx, cy, width, height, bmpdata);
+			//现在去绘图
+
+			//ui_paint_bitmap(left, top, cx, cy, width, height, bmpdata);
 		} else {
 			DEBUG_RDP5(("Failed to decompress data\n"));
 		}
-
+		//send data to java level
+		send_data_vm(left, top, cx, cy, width, height, bmpdata);
 		xfree(bmpdata);
 	}
 }
@@ -1254,7 +1264,8 @@ static void process_update_pdu(STREAM s) {
 	in_uint16_le(s, update_type);
 
 	// TODO ui_begin_update();
-    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","process_update_pdu STREAM:%p",s);
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg",
+			"process_update_pdu STREAM:%p", s);
 	switch (update_type) {
 	case RDP_UPDATE_ORDERS:
 		in_uint8s(s, 2);
@@ -1284,7 +1295,7 @@ static void process_update_pdu(STREAM s) {
 
 /* Process a Save Session Info PDU */
 void process_pdu_logon(STREAM s) {
-    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","process_pdu_logon");
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "process_pdu_logon");
 	uint32 infotype;
 	in_uint32_le(s, infotype);
 	if (infotype == INFOTYPE_LOGON_EXTENDED_INF) {
@@ -1317,7 +1328,8 @@ void process_pdu_logon(STREAM s) {
 			in_uint32_le(s, g_reconnect_logonid);
 			in_uint8a(s, g_reconnect_random, 16);
 			g_has_reconnect_random = True;
-			DEBUG(("Saving auto-reconnect cookie, id=%u\n", g_reconnect_logonid));
+			DEBUG(
+					("Saving auto-reconnect cookie, id=%u\n", g_reconnect_logonid));
 		}
 	}
 }
@@ -1331,7 +1343,7 @@ void process_disconnect_pdu(STREAM s, uint32 * ext_disc_reason) {
 
 /* Process data PDU */
 static RD_BOOL process_data_pdu(STREAM s, uint32 * ext_disc_reason) {
-    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","process_data_pdu");
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "process_data_pdu");
 	uint8 data_pdu_type;
 	uint8 ctype;
 	uint16 clen;
@@ -1349,10 +1361,8 @@ static RD_BOOL process_data_pdu(STREAM s, uint32 * ext_disc_reason) {
 	in_uint16_le(s, clen);
 	clen -= 18;
 
-	if (ctype & RDP_MPPC_COMPRESSED)
-	{
-		if (len > RDP_MPPC_DICT_SIZE
-			)
+	if (ctype & RDP_MPPC_COMPRESSED) {
+		if (len > RDP_MPPC_DICT_SIZE)
 			error("error decompressed packet size exceeds max\n");
 		if (mppc_expand(s->p, clen, ctype, &roff, &rlen) == -1)
 			error("error while decompressing packet\n");
@@ -1394,7 +1404,7 @@ static RD_BOOL process_data_pdu(STREAM s, uint32 * ext_disc_reason) {
 		break;
 
 	case RDP_DATA_PDU_LOGON:
-            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","Received Logon PDU")
+		__android_log_print(ANDROID_LOG_INFO,"JNIMsg","Received Logon PDU")
 		DEBUG(("Received Logon PDU\n"));
 		/* User logged on */
 		process_pdu_logon(s);
@@ -1508,7 +1518,7 @@ static RD_BOOL process_redirect_pdu(STREAM s /*, uint32 * ext_disc_reason */) {
 //TODO need to be wrapped
 /* Process incoming packets */
 void rdp_main_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
-    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_main_loop");
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "rdp_main_loop");
 	while (rdp_loop(deactivated, ext_disc_reason)) {
 		if (g_pending_resize) {
 			return;
@@ -1518,33 +1528,36 @@ void rdp_main_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
 
 /* used in uiports and rdp_main_loop, processes the rdp packets waiting */
 RD_BOOL rdp_loop(RD_BOOL * deactivated, uint32 * ext_disc_reason) {
-    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop");
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "rdp_loop");
 	uint8 type;
 	RD_BOOL cont = True;
 	STREAM s;
 
 	while (cont) {
 		s = rdp_recv(&type);
-		if (s == NULL
-			)
+		if (s == NULL)
 			return False;
 		switch (type) {
 		case RDP_PDU_DEMAND_ACTIVE:
-            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_DEMAND_ACTIVE");    
+			__android_log_print(ANDROID_LOG_INFO, "JNIMsg",
+					"rdp_loop RDP_PDU_DEMAND_ACTIVE");
 			process_demand_active(s);
 			*deactivated = False;
 			break;
 		case RDP_PDU_DEACTIVATE:
-            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_DEACTIVATE"); 
+			__android_log_print(ANDROID_LOG_INFO, "JNIMsg",
+					"rdp_loop RDP_PDU_DEACTIVATE");
 			DEBUG(("RDP_PDU_DEACTIVATE\n"));
 			*deactivated = True;
 			break;
 		case RDP_PDU_REDIRECT:
-            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_REDIRECT");
+			__android_log_print(ANDROID_LOG_INFO, "JNIMsg",
+					"rdp_loop RDP_PDU_REDIRECT");
 			return process_redirect_pdu(s);
 			break;
 		case RDP_PDU_DATA:
-            __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_loop RDP_PDU_DATA");
+			__android_log_print(ANDROID_LOG_INFO, "JNIMsg",
+					"rdp_loop RDP_PDU_DATA");
 			process_data_pdu(s, ext_disc_reason);
 			break;
 		case 0:
@@ -1563,8 +1576,7 @@ RD_BOOL rdp_connect(char *server, uint32 flags, char *domain, char *password,
 	if (!sec_connect(server, g_username, reconnect))
 		return False;
 
-	rdp_send_logon_info(flags, domain, g_username, password, command,
-			directory);
+	rdp_send_logon_info(flags, domain, g_username, password, command, directory);
 	return True;
 }
 

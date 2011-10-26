@@ -27,7 +27,7 @@ RD_BOOL g_bitmap_cache_precache = True;
 RD_BOOL g_encryption = True;
 RD_BOOL g_use_rdp5 = True;
 uint32 g_rdp5_performanceflags = RDP5_NO_WALLPAPER | RDP5_NO_FULLWINDOWDRAG
-| RDP5_NO_MENUANIMATIONS;
+		| RDP5_NO_MENUANIMATIONS;
 RD_BOOL g_has_reconnect_random = False;
 uint32 g_reconnect_logonid = 0;
 char g_reconnect_random[16];
@@ -61,10 +61,56 @@ RD_BOOL g_console_session = False;
 RD_BOOL deactivated;
 uint32 ext_disc_reason = 0;
 
-JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_getenv(JNIEnv *env, jclass thiz)
-{
-    __android_log_print(ANDROID_LOG_INFO, "JNIMsg", "getenv");
-    return (*env)->NewStringUTF(env, getenv("EXTERNAL_STORAGE"));
+/*cached jvm*/
+JavaVM * jvm_cached;
+/*cached class*/
+//jclass cachedClass;
+/**
+ * Load data
+ */
+jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+	JNIEnv *env;
+	//jclass class;
+	jvm_cached = vm;
+	jint result = -1;
+	if ((*vm)->GetEnv(vm, (void **) &env, (void*) JNI_VERSION_1_4)) {
+		//if something is wrong
+		__android_log_print(ANDROID_LOG_INFO, "JNI_OnLoad",
+				"get the current env encounter some error!\n");
+		goto jail;
+	}
+	//得到当前画图的类
+	//class = (*env)->FindClass(env,"org/kidfolk/androidRDP/AndroidRDPActivity");
+	//	if (class == NULL) {
+	//		__android_log_print(ANDROID_LOG_INFO,"JNI_OnLoad","can't get the paint class!");
+	//		goto jail;
+	//	}
+	//生成一个类的jvm全局软引用
+	//	cachedClass = (*env)->NewWeakGlobalRef(env,class);
+	//	if (cachedClass == NULL) {
+	//		__android_log_print(ANDROID_LOG_INFO,"JNI_OnLoad","cached weak global reference is null!");
+	//		go jail;
+	//	}
+	//下面还可以进行一些方法id的缓存
+	result = JNI_VERSION_1_4;
+	jail: return result;
+}
+/**
+ * delete the vm
+ */
+void JNI_OnUnload(JavaVM* vm, void* reserved) {
+	JNIEnv *env;
+	if ((*vm)->AttachCurrentThread(vm, &env, JNI_VERSION_1_4)) {
+		__android_log_print(ANDROID_LOG_INFO, "JNI_OnUnload",
+				"get the env encounter some error!");
+	}
+	//(*env)->DeleteWeakGlobalRef(env,cachedClass);
+}
+
+JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_getenv(
+		JNIEnv *env, jclass thiz) {
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "getenv");
+	return (*env)->NewStringUTF(env, getenv("EXTERNAL_STORAGE"));
 }
 
 /*
@@ -74,12 +120,12 @@ JNIEXPORT jstring JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_getenv(
  */
 JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_setUsername(JNIEnv *env, jclass thiz, jstring username)
 {
-//    g_username = (char *) xmalloc(strlen(username) + 1);
-//    STRNCPY(g_username, username, sizeof(g_username));
-    const char *nativeString = (*env)->GetStringUTFChars(env,username,NULL);
-    g_username = (char *) xmalloc(strlen(nativeString) + 1);
-    STRNCPY(g_username,nativeString,strlen(nativeString)+1);
-    //__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "setUsername:%s",g_username);
+	//    g_username = (char *) xmalloc(strlen(username) + 1);
+	//    STRNCPY(g_username, username, sizeof(g_username));
+	const char *nativeString = (*env)->GetStringUTFChars(env,username,NULL);
+	g_username = (char *) xmalloc(strlen(nativeString) + 1);
+	STRNCPY(g_username,nativeString,strlen(nativeString)+1);
+	//__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "setUsername:%s",g_username);
 }
 
 /*
@@ -89,24 +135,27 @@ JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_setUsernam
  */
 JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_setPassword(JNIEnv *env, jclass thiz, jstring jpassword)
 {
-    const char *str = (*env)->GetStringUTFChars(env,jpassword,NULL);
-    password = (char *) xmalloc(strlen(str) + 1);
-    STRNCPY(password,str,strlen(str)+1);
-    //__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "setPassword:%s",str);
+	const char *str = (*env)->GetStringUTFChars(env,jpassword,NULL);
+	password = (char *) xmalloc(strlen(str) + 1);
+	STRNCPY(password,str,strlen(str)+1);
+	//__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "setPassword:%s",str);
 }
 
-JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_rdp_1connect(JNIEnv *env, jclass thiz, jstring jserver, jint flags, jstring domain, jstring jpassword, jstring shell, jstring directory, jboolean g_redirect)
-{
-    __android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect");
-    int result = 1;
-    const char *nativeServer = (*env)->GetStringUTFChars(env,jserver,NULL);
-    char *server = (char *) xmalloc(strlen(nativeServer)+1);
-    STRNCPY(server,nativeServer,strlen(nativeServer)+1);
-    //__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect server:%s",server);
-    //__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect username:%s",g_username);
-    //__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect password:%s",password);
-    result = rdp_connect(server,flags,domain,password,shell,directory,g_redirect);
-    return result;
+JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_rdp_1connect(
+		JNIEnv *env, jclass thiz, jstring jserver, jint flags, jstring domain,
+		jstring jpassword, jstring shell, jstring directory,
+		jboolean g_redirect) {
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "rdp_1connect");
+	int result = 1;
+	const char *nativeServer = (*env)->GetStringUTFChars(env, jserver, NULL);
+	char *server = (char *) xmalloc(strlen(nativeServer) + 1);
+	STRNCPY(server, nativeServer, strlen(nativeServer) + 1);
+	//__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect server:%s",server);
+	//__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect username:%s",g_username);
+	//__android_log_print(ANDROID_LOG_INFO,"JNIMsg","rdp_1connect password:%s",password);
+	result = rdp_connect(server, flags, domain, password, shell, directory,
+			g_redirect);
+	return result;
 
 }
 
@@ -117,40 +166,51 @@ JNIEXPORT jint JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_rdp_1conne
  */
 JNIEXPORT void JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_rdp_1main_1loop(JNIEnv *env, jclass thiz)
 {
-    rdp_main_loop(&deactivated, &ext_disc_reason);
+	rdp_main_loop(&deactivated, &ext_disc_reason);
+}
+/**
+ * @title the temp function
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_kidfolk_androidRDP_AndroidRDPActivity_getBitmapBytesFormNative(
+		JNIEnv * env, jclass clazz, jint x, jint y, jint width, jint height, jobjectArray array) {
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "Java_org_kidfolk_androidRDP_AndroidRDPActivity_getBitmapBytesFormNative");
+}
+/**
+ * send data to java level
+ */
+void send_data_vm(int left, int top, int cx, int cy, int width, int height,
+		uint8 * bmpdata) {
+	__android_log_print(ANDROID_LOG_INFO, "JNIMsg", "send_data_vm");
 }
 
 /* report an unimplemented protocol feature */
-void unimpl(char *format, ...)
-{
+void unimpl(char *format, ...) {
 	va_list ap;
-    
+
 	fprintf(stderr, "NOT IMPLEMENTED: ");
-    
+
 	va_start(ap, format);
 	vfprintf(stderr, format, ap);
 	va_end(ap);
 }
 
 /* report a warning */
-void warning(char *format, ...)
-{
+void warning(char *format, ...) {
 	va_list ap;
-    
+
 	fprintf(stderr, "WARNING: ");
-    
+
 	va_start(ap, format);
 	vfprintf(stderr, format, ap);
 	va_end(ap);
 }
 
 /* report an error */
-void error(char *format, ...)
-{
+void error(char *format, ...) {
 	va_list ap;
-    
+
 	fprintf(stderr, "ERROR: ");
-    
+
 	va_start(ap, format);
 	vfprintf(stderr, format, ap);
 	va_end(ap);
@@ -160,12 +220,11 @@ void error(char *format, ...)
 void *
 xrealloc(void *oldmem, size_t size) {
 	void *mem;
-    
+
 	if (size == 0)
 		size = 1;
 	mem = realloc(oldmem, size);
-	if (mem == NULL)
-	{
+	if (mem == NULL) {
 		error("xrealloc %ld\n", size);
 		exit(EX_UNAVAILABLE);
 	}
@@ -180,35 +239,33 @@ void xfree(void *mem) {
 void save_licence(unsigned char *data, int length) {
 	char *home, *path, *tmppath;
 	int fd;
-    
+
 	home = getenv("EXTERNAL_STORAGE");
-	if (home == NULL
-        )
+	if (home == NULL)
 		return;
-    
-	path = (char *) xmalloc(
-                            strlen(home) + strlen(g_hostname) + sizeof("/.rdesktop/licence."));
-    
+
+	path = (char *) xmalloc(strlen(home) + strlen(g_hostname)
+			+ sizeof("/.rdesktop/licence."));
+
 	sprintf(path, "%s/.rdesktop", home);
-	if ((mkdir(path, 0700) == -1) && errno != EEXIST)
-	{
+	if ((mkdir(path, 0700) == -1) && errno != EEXIST) {
 		perror(path);
 		return;
 	}
-    
+
 	/* write licence to licence.hostname.new, then atomically rename to licence.hostname */
-    
+
 	sprintf(path, "%s/.rdesktop/licence.%s", home, g_hostname);
 	tmppath = (char *) xmalloc(strlen(path) + sizeof(".new"));
 	strcpy(tmppath, path);
 	strcat(tmppath, ".new");
-    
+
 	fd = open(tmppath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (fd == -1) {
 		perror(tmppath);
 		return;
 	}
-    
+
 	if (write(fd, data, length) != length) {
 		perror(tmppath);
 		unlink(tmppath);
@@ -216,7 +273,7 @@ void save_licence(unsigned char *data, int length) {
 		perror(path);
 		unlink(tmppath);
 	}
-    
+
 	close(fd);
 	xfree(tmppath);
 	xfree(path);
@@ -226,23 +283,22 @@ int load_licence(unsigned char **data) {
 	char *home, *path;
 	struct stat st;
 	int fd, length;
-    
+
 	home = getenv("EXTERNAL_STORAGE");
-	if (home == NULL
-        )
+	if (home == NULL)
 		return -1;
-    
-	path = (char *) xmalloc(
-                            strlen(home) + strlen(g_hostname) + sizeof("/.rdesktop/licence."));
+
+	path = (char *) xmalloc(strlen(home) + strlen(g_hostname)
+			+ sizeof("/.rdesktop/licence."));
 	sprintf(path, "%s/.rdesktop/licence.%s", home, g_hostname);
-    
+
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
 		return -1;
-    
+
 	if (fstat(fd, &st))
 		return -1;
-    
+
 	*data = (uint8 *) xmalloc(st.st_size);
 	length = read(fd, *data, st.st_size);
 	close(fd);
@@ -254,30 +310,28 @@ int load_licence(unsigned char **data) {
 RD_BOOL rd_pstcache_mkdir(void) {
 	char *home;
 	char bmpcache_dir[256];
-    
+
 	//home = getenv("HOME");
-    //get android sdcard root directory
-    home = getenv("EXTERNAL_STORAGE");
-    
+	//get android sdcard root directory
+	home = getenv("EXTERNAL_STORAGE");
+
 	if (home == NULL)
 		return False;
-    
+
 	sprintf(bmpcache_dir, "%s/%s", home, ".rdesktop");
-    
-	if ((mkdir(bmpcache_dir, S_IRWXU) == -1) && errno != EEXIST)
-	{
+
+	if ((mkdir(bmpcache_dir, S_IRWXU) == -1) && errno != EEXIST) {
 		perror(bmpcache_dir);
 		return False;
 	}
-    
+
 	sprintf(bmpcache_dir, "%s/%s", home, ".rdesktop/cache");
-    
-	if ((mkdir(bmpcache_dir, S_IRWXU) == -1) && errno != EEXIST)
-	{
+
+	if ((mkdir(bmpcache_dir, S_IRWXU) == -1) && errno != EEXIST) {
 		perror(bmpcache_dir);
 		return False;
 	}
-    
+
 	return True;
 }
 
@@ -286,11 +340,11 @@ int rd_open_file(char *filename) {
 	char *home;
 	char fn[256];
 	int fd;
-    
+
 	home = getenv("EXTERNAL_STORAGE");
-	if (home == NULL
-        )
-		return -1;sprintf(fn, "%s/.rdesktop/%s", home, filename);
+	if (home == NULL)
+		return -1;
+	sprintf(fn, "%s/.rdesktop/%s", home, filename);
 	fd = open(fn, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd == -1)
 		perror(fn);
@@ -300,7 +354,7 @@ int rd_open_file(char *filename) {
 /* do a write lock on a file */
 RD_BOOL rd_lock_file(int fd, int start, int len) {
 	struct flock lock;
-    
+
 	lock.l_type = F_WRLCK;
 	lock.l_whence = SEEK_SET;
 	lock.l_start = start;
@@ -334,8 +388,7 @@ int rd_lseek_file(int fd, int offset) {
 void *
 xmalloc(int size) {
 	void *mem = malloc(size);
-	if (mem == NULL)
-	{
+	if (mem == NULL) {
 		error("xmalloc %d\n", size);
 		exit(EX_UNAVAILABLE);
 	}
@@ -349,22 +402,22 @@ void generate_random(uint8 * random) {
 	SSL_MD5 md5;
 	uint32 *r;
 	int fd, n;
-    
+
 	/* If we have a kernel random device, try that first */
-	if (((fd = open("/dev/urandom", O_RDONLY)) != -1)
-        || ((fd = open("/dev/random", O_RDONLY)) != -1)) {
+	if (((fd = open("/dev/urandom", O_RDONLY)) != -1) || ((fd = open(
+			"/dev/random", O_RDONLY)) != -1)) {
 		n = read(fd, random, 32);
 		close(fd);
 		if (n == 32)
 			return;
 	}
-    
+
 #ifdef EGD_SOCKET
 	/* As a second preference use an EGD */
 	if (generate_random_egd(random))
-		return;
+	return;
 #endif
-    
+
 	/* Otherwise use whatever entropy we can gather - ideas welcome. */
 	r = (uint32 *) random;
 	r[0] = (getpid()) | (getppid() << 16);
@@ -375,7 +428,7 @@ void generate_random(uint8 * random) {
 	r[5] = st.st_atime;
 	r[6] = st.st_mtime;
 	r[7] = st.st_ctime;
-    
+
 	/* Hash both halves with MD5 to obscure possible patterns */
 	ssl_md5_init(&md5);
 	ssl_md5_update(&md5, random, 16);
@@ -409,11 +462,11 @@ next_arg(char *src, char needle) {
 	char *nextval;
 	char *p;
 	char *mvp = 0;
-    
+
 	/* EOS */
 	if (*src == (char) 0x00)
 		return 0;
-    
+
 	p = src;
 	/*  skip escaped needles */
 	while ((nextval = strchr(p, needle))) {
@@ -431,15 +484,15 @@ next_arg(char *src, char needle) {
 			p = nextval + 1;
 			break;
 		}
-        
+
 	}
-    
+
 	/* more args available */
 	if (nextval) {
 		*nextval = (char) 0x00;
 		return ++nextval;
 	}
-    
+
 	/* no more args after this, jump to EOS */
 	nextval = src + strlen(src);
 	return nextval;
@@ -459,28 +512,28 @@ void toupper_str(char *p) {
 char *
 l_to_a(long N, int base) {
 	static char ret[LTOA_BUFSIZE];
-    
+
 	char *head = ret, buf[LTOA_BUFSIZE], *tail = buf + sizeof(buf);
-    
+
 	register int divrem;
-    
+
 	if (base < 36 || 2 > base)
 		base = 10;
-    
+
 	if (N < 0) {
 		*head++ = '-';
 		N = -N;
 	}
-    
+
 	tail = buf + sizeof(buf);
 	*--tail = 0;
-    
+
 	do {
 		divrem = N % base;
 		*--tail = (divrem <= 9) ? divrem + '0' : divrem + 'a' - 10;
 		N /= base;
 	} while (N);
-    
+
 	strcpy(head, tail);
 	return ret;
 }
